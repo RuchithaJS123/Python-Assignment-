@@ -1,0 +1,88 @@
+import requests
+import smtplib
+from email.message import EmailMessage
+
+def fetch_supermarket_data():
+    """Fetch supermarket data from the API."""
+    try:
+        url = "http://demo3278802.mockable.io/Super_Market_Data"
+        response = requests.get(url)
+        
+        if response.status_code == 200:
+            return response.json()
+        else:
+            print("Failed to retrieve data. Status code:", response.status_code)
+            return None
+    except Exception as e:
+        print(f"Error fetching data: {e}")
+        return None
+
+def calculate_bill(price, quantity):
+    """Calculate total price and GST."""
+    total_price = price * quantity
+    gst = (total_price * 5) / 100
+    final_price = total_price + gst
+    return total_price, gst, final_price
+
+def send_email_bill(total_price, gst, final_price, email):
+    """Send the bill via email."""
+    try:
+        sender_email = "your_email@gmail.com"
+        receiver_email = email
+        password = "your_password"
+
+        msg = EmailMessage()
+        msg["Subject"] = "Supermarket Bill Invoice"
+        msg["From"] = sender_email
+        msg["To"] = receiver_email
+        msg.set_content(f"Your bill details:\nTotal Price: {total_price}\nGST: {gst}\nFinal Price: {final_price}")
+
+        with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
+            server.login(sender_email, password)
+            server.send_message(msg)
+        
+        print("Email sent successfully!")
+    except Exception as e:
+        print(f"Error sending email: {e}")
+
+def print_bill_to_file(total_price, gst, final_price):
+    """Save the bill to a file and print it."""
+    try:
+        with open("customer_bill.csv", "w") as file:
+            file.write(f"Total Price,GST,Final Price\n{total_price},{gst},{final_price}")
+        
+        print("Bill saved to customer_bill.csv")
+        with open("customer_bill.csv", "r") as file:
+            print(file.read())
+    except Exception as e:
+        print(f"Error handling the bill file: {e}")
+
+def supermarket():
+    """Main function for the supermarket billing system."""
+    try:
+        data = fetch_supermarket_data()
+        if not data:
+            return
+        
+        fruit_name = data["Ruchitha"]
+        price = data["Price"]
+
+        quantity = int(input(f"How much quantity of {fruit_name} do you want? "))
+        total_price, gst, final_price = calculate_bill(price, quantity)
+        
+        print(f"Total Price: {total_price}, GST: {gst}, Final Price: {final_price}")
+
+        bill_method = int(input("Do you want an email bill (press 1) or a printed bill (press 2)? "))
+        
+        if bill_method == 1:
+            email = input("Ruchitha: ")
+            send_email_bill(total_price, gst, final_price, email)
+        elif bill_method == 2:
+            print_bill_to_file(total_price, gst, final_price)
+        else:
+            print("Invalid input")
+    
+    except Exception as e:
+        print(f"Error: {e}")
+
+supermarket()
